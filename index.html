@@ -52,11 +52,9 @@
     <div id="chess-board"></div>
 
     <script>
-        //variable du tableau qui est assigne au chess-board 
         const board = document.getElementById('chess-board');
-        //declaration de la variables tableau et curranPlayer
         let curBoard, curPlayer;
-        //intialisation du tableau avec les elements du jeux 
+
         const initialBoard = [
             ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
             ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
@@ -67,119 +65,128 @@
             ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'],
             ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
         ];
-        //parcours de ligne tant que c est inferiure 8 on incremente la ligne 
+
         for (let row = 0; row < 8; row++) {
-            //parcours de la colonne tant que c est inferieure da 8 on incremente la colonne 
             for (let col = 0; col < 8; col++) {
-                //on cree des section on divise chaque bloc 
                 const square = document.createElement('div');
                 square.classList.add('square');
-                square.id = `${row + 1}${col + 1}`; // Aggiunta ID per identificare la posizione
-                //si lignea + colone e nel mezzo est uguale a 0 aggiugngiamo bianco
+                square.id = `${row + 1}${col + 1}`;
                 if ((row + col) % 2 === 0) {
                     square.classList.add('light');
-                    //se no aggiungiamo nero 
                 } else {
                     square.classList.add('dark');
                 }
-                //on ajoute square per aggiungere al contenitore di testo che assignato alla colona iniziale della linea e colonna 
                 square.textContent = initialBoard[row][col];
-                //aggiungiamo alla tabella 
                 board.appendChild(square);
             }
         }
-        //funzione per l ijnizio de l gioco 
+
         function InitGame() {
-            //creazione della variabile in cui ci saranno le diverse chiavi delle posizioni dei pezzi da gioco 
-            const starterPosition = [
-                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
-                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-                ['.', '.', '.', '.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.'],
-                ['.', '.', '.', '.', '.', '.', '.', '.'],
-                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
-            ];
-            //variable curBoard est assignation a la posizione iniziale 
-            curBoard = starterPosition;
-            //vurPlayer est assignation a bianco 
-            curPlayer = 'light';
-            //caricamento della posizione e assignato ala funzione loadPostion
-            loadPosition(starterPosition);
+            curBoard = initialBoard;
+            curPlayer = 'white';
+
+            loadPosition(initialBoard);
         }
-        //funzione per il caricamento deile posizioni 
+
         function loadPosition(position) {
-            //parcours de l indice intiale
-            //tant que l indice est inferieure a 8 on incremente l indice 
             for (let i = 0; i < 8; i++) {
-                //tant que l indice j pour la colone on incremente l indice de la colone 
                 for (let j = 0; j < 8; j++) {
                     const square = document.getElementById(`${i + 1}${j + 1}`);
-                    square.textContent = getPieceSource(position[i][j]);
+                    square.textContent = position[i][j];
                 }
             }
         }
-        //function qui permete de recupere les infomration ses clef de chaque position de me pieces dans mon jeux 
-        function getPieceSource(piece) {
-            switch (piece) {
-                case 'R': return '♜';
-                case 'N': return '♞';
-                case 'B': return '♝';
-                case 'Q': return '♛';
-                case 'K': return '♚';
-                case 'P': return '♟';
-                case 'r': return '♖';
-                case 'n': return '♘';
-                case 'b': return '♗';
-                case 'q': return '♕';
-                case 'k': return '♔';
-                case 'p': return '♙';
-                default: return ''; // Spazio vuoto per celle senza pezzo
-            }
-        }
-        //funzione per accedere ai pezzi
+
         function setPieceHoldEvents() {
-            //declarazione delle variabili curHeldPiece et startPos pour dire que cette null
             let curHeldPiece = null;
             let startPos = null;
-            //evenement pour le mouvement en bas de pieces de 
-            board.addEventListener('mousedown', (event) => {
-                if (event.target.classList.contains('square') && event.target.textContent !== '') {
-                    curHeldPiece = event.target;
+
+            // Aggiunge gestione del tocco per i dispositivi mobili
+            board.addEventListener('touchstart', (event) => {
+                event.preventDefault(); // Evita il trascinamento nativo su mobile
+                const target = event.target;
+                if (curPlayer === 'white' && target.classList.contains('square') && target.textContent !== '') {
+                    curHeldPiece = target;
                     startPos = curHeldPiece.id;
                 }
             });
-            //evenement pour le piece qui se trouve en bas qui monte haut
-            board.addEventListener('mouseup', (event) => {
-                if (curHeldPiece) {
-                    const endSquare = event.target;
-                    if (validateMovement(startPos, endSquare.id)) {
-                        movePiece(curHeldPiece, startPos, endSquare.id);
+
+            board.addEventListener('touchend', (event) => {
+                const target = document.elementFromPoint(
+                    event.changedTouches[0].clientX,
+                    event.changedTouches[0].clientY
+                );
+
+                if (curHeldPiece && curPlayer === 'white') {
+                    if (validateMovement(startPos, target.id)) {
+                        movePiece(curHeldPiece, startPos, target.id);
+                        curPlayer = 'black'; // Passa il turno all'IA
+                        setTimeout(makeAIMove, 500); // Ritardo per l'IA
                     }
                     curHeldPiece = null;
                 }
             });
         }
-        //funzion per la validazione dei movimento
+
         function validateMovement(start, end) {
-            const startX = parseInt(start[0]) - 1;
-            const startY = parseInt(start[1]) - 1;
-            const endX = parseInt(end[0]) - 1;
-            const endY = parseInt(end[1]) - 1;
-            return true; // Per ora, valida tutti i movimenti
+            return true; // Qui andrebbe inserita una logica di validazione delle mosse
         }
-        //funzione per il movimento dei pezzi
+
         function movePiece(piece, start, end) {
             const endSquare = document.getElementById(end);
             endSquare.textContent = piece.textContent;
             piece.textContent = '';
-            curPlayer = curPlayer === 'light' ? 'dark' : 'light';
         }
-        //appel a le fonction
+
+        function makeAIMove() {
+            const moves = findAllMovesForAI();
+            if (moves.length > 0) {
+                const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                const startSquare = document.getElementById(randomMove.start);
+                const endSquare = document.getElementById(randomMove.end);
+                movePiece(startSquare, randomMove.start, randomMove.end);
+                curPlayer = 'white';
+            }
+        }
+
+        function findAllMovesForAI() {
+            const moves = [];
+            for (let row = 1; row <= 8; row++) {
+                for (let col = 1; col <= 8; col++) {
+                    const squareId = `${row}${col}`;
+                    const square = document.getElementById(squareId);
+                    if (isAIPiece(square.textContent)) {
+                        const possibleMoves = getLegalMoves(squareId);
+                        possibleMoves.forEach(move => {
+                            moves.push({ start: squareId, end: move });
+                        });
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function isAIPiece(piece) {
+            return ['♖', '♘', '♗', '♕', '♔', '♟'].includes(piece);
+        }
+
+        function getLegalMoves(position) {
+            const moves = [];
+            const row = parseInt(position[0]);
+            const col = parseInt(position[1]);
+            if (row < 8 && isSquareEmpty(`${row + 1}${col}`)) {
+                moves.push(`${row + 1}${col}`);
+            }
+            return moves;
+        }
+
+        function isSquareEmpty(position) {
+            const square = document.getElementById(position);
+            return square && square.textContent === '';
+        }
+
         InitGame();
         setPieceHoldEvents();
-
     </script>
 </body>
 
