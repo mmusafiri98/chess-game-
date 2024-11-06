@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: rgb(90, 211, 241);
+        }
+
+        #chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 2px solid #333;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+        }
+
+        .square.light {
+            background-color: #eee;
+        }
+
+        .square.dark {
+            background-color: #aa9292;
+            color: white;
+        }
+
+        h1 {
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Chess Game</h1>
+    <div id="chess-board"></div>
+
+    <script>
+        //variable du tableau qui est assigne au chess-board 
+        const board = document.getElementById('chess-board');
+        //declaration de la variables tableau et curranPlayer
+        let curBoard, curPlayer;
+        //intialisation du tableau avec les elements du jeux 
+        const initialBoard = [
+            ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+            ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'],
+            ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
+        ];
+        //parcours de ligne tant que c est inferiure 8 on incremente la ligne 
+        for (let row = 0; row < 8; row++) {
+            //parcours de la colonne tant que c est inferieure da 8 on incremente la colonne 
+            for (let col = 0; col < 8; col++) {
+                //on cree des section on divise chaque bloc 
+                const square = document.createElement('div');
+                square.classList.add('square');
+                square.id = `${row + 1}${col + 1}`; // Aggiunta ID per identificare la posizione
+                //si lignea + colone e nel mezzo est uguale a 0 aggiugngiamo bianco
+                if ((row + col) % 2 === 0) {
+                    square.classList.add('light');
+                    //se no aggiungiamo nero 
+                } else {
+                    square.classList.add('dark');
+                }
+                //on ajoute square per aggiungere al contenitore di testo che assignato alla colona iniziale della linea e colonna 
+                square.textContent = initialBoard[row][col];
+                //aggiungiamo alla tabella 
+                board.appendChild(square);
+            }
+        }
+        //funzione per l ijnizio de l gioco 
+        function InitGame() {
+            //creazione della variabile in cui ci saranno le diverse chiavi delle posizioni dei pezzi da gioco 
+            const starterPosition = [
+                ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'],
+                ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['.', '.', '.', '.', '.', '.', '.', '.'],
+                ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+                ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r']
+            ];
+            //variable curBoard est assignation a la posizione iniziale 
+            curBoard = starterPosition;
+            //vurPlayer est assignation a bianco 
+            curPlayer = 'light';
+            //caricamento della posizione e assignato ala funzione loadPostion
+            loadPosition(starterPosition);
+        }
+        //funzione per il caricamento deile posizioni 
+        function loadPosition(position) {
+            //parcours de l indice intiale
+            //tant que l indice est inferieure a 8 on incremente l indice 
+            for (let i = 0; i < 8; i++) {
+                //tant que l indice j pour la colone on incremente l indice de la colone 
+                for (let j = 0; j < 8; j++) {
+                    const square = document.getElementById(`${i + 1}${j + 1}`);
+                    square.textContent = getPieceSource(position[i][j]);
+                }
+            }
+        }
+        //function qui permete de recupere les infomration ses clef de chaque position de me pieces dans mon jeux 
+        function getPieceSource(piece) {
+            switch (piece) {
+                case 'R': return '♜';
+                case 'N': return '♞';
+                case 'B': return '♝';
+                case 'Q': return '♛';
+                case 'K': return '♚';
+                case 'P': return '♟';
+                case 'r': return '♖';
+                case 'n': return '♘';
+                case 'b': return '♗';
+                case 'q': return '♕';
+                case 'k': return '♔';
+                case 'p': return '♙';
+                default: return ''; // Spazio vuoto per celle senza pezzo
+            }
+        }
+        //funzione per accedere ai pezzi
+        function setPieceHoldEvents() {
+            //declarazione delle variabili curHeldPiece et startPos pour dire que cette null
+            let curHeldPiece = null;
+            let startPos = null;
+            //evenement pour le mouvement en bas de pieces de 
+            board.addEventListener('mousedown', (event) => {
+                if (event.target.classList.contains('square') && event.target.textContent !== '') {
+                    curHeldPiece = event.target;
+                    startPos = curHeldPiece.id;
+                }
+            });
+            //evenement pour le piece qui se trouve en bas qui monte haut
+            board.addEventListener('mouseup', (event) => {
+                if (curHeldPiece) {
+                    const endSquare = event.target;
+                    if (validateMovement(startPos, endSquare.id)) {
+                        movePiece(curHeldPiece, startPos, endSquare.id);
+                    }
+                    curHeldPiece = null;
+                }
+            });
+        }
+        //funzion per la validazione dei movimento
+        function validateMovement(start, end) {
+            const startX = parseInt(start[0]) - 1;
+            const startY = parseInt(start[1]) - 1;
+            const endX = parseInt(end[0]) - 1;
+            const endY = parseInt(end[1]) - 1;
+            return true; // Per ora, valida tutti i movimenti
+        }
+        //funzione per il movimento dei pezzi
+        function movePiece(piece, start, end) {
+            const endSquare = document.getElementById(end);
+            endSquare.textContent = piece.textContent;
+            piece.textContent = '';
+            curPlayer = curPlayer === 'light' ? 'dark' : 'light';
+        }
+        //appel a le fonction
+        InitGame();
+        setPieceHoldEvents();
+
+    </script>
+</body>
+
+</html>
